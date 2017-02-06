@@ -1,16 +1,16 @@
 # LeadsNearby Bulk Service Area Generator #
-Tags: NearbyNow
-Requires at least: 3.5.1
-Tested up to: 4.4
-Stable tag: 1.0
-License: GPLv2 or later
+Tags: NearbyNow<br/>
+Requires at least: 3.5.1<br/>
+Tested up to: 4.4<br/>
+Stable tag: 1.0<br/>
+License: GPLv2 or later<br/>
 
 Create Multiple Geographically Targeted Landing Pages Quickly Using Generic Text & Automatically Inserted City and State Names. 
 
 ## Description ##
 This plugin creates Multiple WordPress Pages with the provided city and state name in the title and body copy. Allows for parent pages, page template, page titles and contents. The total number of pages created will be the number of lines for city. The state field will accompany all city names provided (e.g Athens,GA) format.
 
-SEO Tips
+**SEO Tips**
 
 We recommend creating city-targeted pages in bulk, then customizing the content for each page. Ideally, more than half of the content on a city landing page should be unique to that page and over 500 words in length.
 
@@ -18,7 +18,7 @@ When the LeadsNearby Bulk Service Area Generator plugin creates a page, it will 
 
 Be sure to include an Opt-In form to capture user information.
 
-== Installation ==
+## Installation ##
 This section describes how to install the plugin and get it working.
 
 1. Download the plugin zip file from http://downloads.wordpress.org/plugin/bulk-city-landing-page-creator.zip extract it and upload to your wp-content/plugins directory
@@ -35,14 +35,14 @@ This section describes how to install the plugin and get it working.
 
 After creating the new pages you will be able to see the pages under the wordpress Pages section.
 
-== Changelog ==
-1.0
-Initial Public Release
-Create Multiple Pages with City and State Names in Bulk
-Page Template capability
-Parent Page capability
-Default WordPress WYSIWYG included in Page Contents Field.
-Nearby Now shortcode generator button included.
+## Changelog ##
+1.0<br/>
+Initial Public Release<br/>
+Create Multiple Pages with City and State Names in Bulk<br/>
+Page Template capability<br/>
+Parent Page capability<br/>
+Default WordPress WYSIWYG included in Page Contents Field.<br/>
+Nearby Now shortcode generator button included.<br/>
 [lnb-city] & [lnb-state] shortcodes
 
 
