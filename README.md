@@ -1,4 +1,4 @@
-=== LeadsNearby Bulk Service Area Generator ===
+# LeadsNearby Bulk Service Area Generator #
 Tags: NearbyNow
 Requires at least: 3.5.1
 Tested up to: 4.4
@@ -7,7 +7,7 @@ License: GPLv2 or later
 
 Create Multiple Geographically Targeted Landing Pages Quickly Using Generic Text & Automatically Inserted City and State Names. 
 
-== Description ==
+## Description ##
 This plugin creates Multiple WordPress Pages with the provided city and state name in the title and body copy. Allows for parent pages, page template, page titles and contents. The total number of pages created will be the number of lines for city. The state field will accompany all city names provided (e.g Athens,GA) format.
 
 SEO Tips
