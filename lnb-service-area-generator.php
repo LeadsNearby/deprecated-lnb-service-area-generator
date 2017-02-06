@@ -3,7 +3,7 @@
 Plugin Name: LNB Bulk Service Area Generator
 Plugin URI: http://leadsnearby.com/
 Description: Bulk creation of Nearby Now City Pages
-Version: 1.2.0
+Version: 1.3.0
 Author: LeadsNearby
 Author URI: http://leadsnearby.com
 License: GPLv2 or later
@@ -62,9 +62,9 @@ function LNB_settings_page(){
             update_post_meta($id,'lnb-city',$title2);
             if(isset($_REQUEST['page_template']) && $_REQUEST['page_template']!='')
             update_post_meta($id, '_wp_page_template', $_REQUEST['page_template']);
-        	$sidebar = $_REQUEST['fusion_page_sidebar'];
-        	if(isset($_REQUEST['fusion_page_sidebar']) && $_REQUEST['page_sidebar'] != 'no-sidebar' )
-        	update_post_meta($id, 'sbg_selected_sidebar_replacement', array( 0 => $sidebar) );
+        	if(isset($_REQUEST['schema-itemtype']) && $_REQUEST['schema-itemtype']!='')
+        	update_post_meta($id, 'lnb-schema-itemtype', $_REQUEST['schema-itemtype']);
+
 		
 		if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {	
 			if( !is_wp_error($id) && $id > 0 ) {				
@@ -134,7 +134,7 @@ function LNB_settings_page(){
 							$option .= '</option>';
 							echo $option;
 						}
-						echo "</splect>";
+						echo "</select>";
 					}// End if Pages
 					?>
 					</td>
@@ -144,7 +144,7 @@ function LNB_settings_page(){
 					<?php
 					$templates = get_page_templates();
 					if($templates && !empty($templates)){
-						echo "<select name='page_template' id='page_template' ><option value='default'>Default</option>";
+						echo "<select name='page_template' id='page_template' ><option value=''>Default</option>";
 						foreach ( $templates as $template_name => $template_filename ) {
 						$option = '<option value="' . $template_filename  . '">';
 						$option .= $template_name;
@@ -154,19 +154,6 @@ function LNB_settings_page(){
 						echo "</select>";
 					} //End IF Templates
 					?>
-					</td>
-				</tr>
-				<tr>
-					<td>Sidebar</td>
-					<td>
-						<select name='fusion_page_sidebar' id='fusion_page_sidebar' ><option value='no-sidebar'>No sidebar</option>
-						<?php
-							global $wp_registered_sidebars;
-							foreach ($wp_registered_sidebars as $sidebar) {
-								$option = '<option value="'.$sidebar['name'].'">'.$sidebar['name'].'</option>';
-								echo $option;
-							}
-						?>
 					</td>
 				</tr>
 				<tr>
@@ -215,11 +202,25 @@ function LNB_settings_page(){
 						<br /><label>The specified meta description should be have a maximum of 156 characters toensure the entire description is visible. You currently have <span id="chars">156</span> characters remaining</label>
 					</td>
 				</tr>
-        <tr>
+        		<tr>
 					<td valign="top"><?php echo _e('Focus Keyword');?></td>
 					<td>
 						<input id="focuskeyword" type="text" cols="80" rows="5" name="focuskeyword" size="70" placeholder="Enter the main keyword or keyphrase" />
 						<br><label><?php _e("Pick the main keyword or keyphrase that this post/page is about."); ?></label>
+					</td>
+				</tr>
+				<?php } ?>
+				<?php if( is_plugin_active( 'schema-options/main.php' ) ) { ?>
+				<tr>
+					<td valign="top"><?php echo _e('Schema ItemType');?></td>
+					<td>
+						<select id="schema-itemtype" type="text" name="schema-itemtype">
+						<?php
+						$lnb_schema_itemtype_array = schema_admin_page::get_schema_itemtypes();
+						foreach ($lnb_schema_itemtype_array as $option) { ?>
+							<option value="<?php echo $option['value']?>"><?php echo $option['title']?></option>
+						<?php } ?>
+						</select>
 					</td>
 				</tr>
 				<?php } ?>
