@@ -3,7 +3,7 @@
 Plugin Name: LNB Bulk Service Area Generator
 Plugin URI: http://leadsnearby.com/
 Description: Bulk creation of Nearby Now City Pages
-Version: 1.3.5
+Version: 1.3.6
 Author: LeadsNearby
 Author URI: http://leadsnearby.com
 License: GPLv2 or later
@@ -218,7 +218,7 @@ function LNB_settings_page(){
 				<tr>
 					<td valign="top"><?php echo _e('Meta Description');?></td>
 					<td>
-						<textarea id="metadescription" type="text" rows="5" cols="120" name="metadescription" maxlength="156"></textarea>
+						<textarea id="metadescription" type="text" rows="5" cols="120" name="metadescription" maxlength="190"></textarea>
 						<br /><label>The specified meta description should be have a maximum of 156 characters toensure the entire description is visible. You currently have <span id="chars">156</span> characters remaining</label>
 					</td>
 				</tr>
