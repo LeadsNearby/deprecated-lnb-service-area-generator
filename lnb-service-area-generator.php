@@ -156,6 +156,26 @@ function LNB_settings_page(){
 					?>
 					</td>
 				</tr>
+				<?php 
+				$theme = wp_get_theme();
+				$theme_name = $theme->name;
+				$theme_parent = $theme->parent();
+
+				if ($theme_name = 'Avada' || $theme_parent = 'Avada' ) :  ?>
+				<tr>
+					<td>Sidebar</td>
+					<td>
+						<select name='fusion_page_sidebar' id='fusion_page_sidebar' ><option value='no-sidebar'>No sidebar</option>
+						<?php
+							global $wp_registered_sidebars;
+							foreach ($wp_registered_sidebars as $sidebar) {
+								$option = '<option value="'.$sidebar['name'].'">'.$sidebar['name'].'</option>';
+								echo $option;
+							}
+						?>
+					</td>
+				</tr>
+				<?php endif; ?>
 				<tr>
 					<td valign="top"><?php echo _e('Page Title');?></td>
 					<td>
