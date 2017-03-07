@@ -3,7 +3,7 @@
 Plugin Name: LNB Bulk Service Area Generator
 Plugin URI: http://leadsnearby.com/
 Description: Bulk creation of Nearby Now City Pages
-Version: 1.3.6
+Version: 1.4.0
 Author: LeadsNearby
 Author URI: http://leadsnearby.com
 License: GPLv2 or later
@@ -20,7 +20,13 @@ if(is_admin()){
     add_action('admin_menu','auto_generate_plugin_admin_menu');
 
     function auto_generate_plugin_admin_menu(){
-        add_options_page('Manage Contents','LNB Bulk Service Area Pages','administrator','content_settings','LNB_settings_page');
+        add_options_page(
+        	'Manage Contents',
+        	'LNB Bulk Service Area Pages',
+        	'administrator',
+        	'content_settings',
+        	'LNB_settings_page'
+        );
     }  
 }
 
@@ -64,6 +70,8 @@ function LNB_settings_page(){
             update_post_meta($id, '_wp_page_template', $_REQUEST['page_template']);
         	if(isset($_REQUEST['schema-itemtype']) && $_REQUEST['schema-itemtype']!='')
         	update_post_meta($id, 'lnb-schema-itemtype', $_REQUEST['schema-itemtype']);
+        	if(isset($_REQUEST['fusion_page_sidebar']) && $_REQUEST['fusion_page_sidebar']!='')
+        	update_post_meta($id, 'sbg_selected_sidebar_replacement', array( 0 => $_REQUEST['fusion_page_sidebar'] ) );
 
 		
 		if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {	
