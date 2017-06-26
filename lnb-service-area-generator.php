@@ -263,7 +263,7 @@ function LNB_settings_page(){
 add_action('admin_enqueue_scripts', 'lnb_bulk_plugin_scripts');
 function lnb_bulk_plugin_scripts()  {
 	if (is_admin()) {
-		wp_register_script( 'jquery-validate', 'http://ajax.aspnetcdn.com/ajax/jquery.validate/1.14.0/jquery.validate.min.js', TRUE);
+		wp_register_script( 'jquery-validate', '//ajax.aspnetcdn.com/ajax/jquery.validate/1.14.0/jquery.validate.min.js', TRUE);
 		wp_enqueue_script('jquery-validate');
 	}		
 }
