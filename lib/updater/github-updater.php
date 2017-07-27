@@ -7,7 +7,7 @@
 *    new GitHubPluginUpdater( __FILE__, 'myGitHubUsername', "Repo-Name" );
 *}
 */
-if( !class_exists('GitHubPluginUpdater') ) {
+if( ! class_exists('GitHubPluginUpdater') ) {
 
     class GitHubPluginUpdater {
      
@@ -16,6 +16,7 @@ if( !class_exists('GitHubPluginUpdater') ) {
         private $username; // GitHub username
         private $repo; // GitHub repo name
         private $pluginFile; // __FILE__ of our plugin
+        private $pluginFilePath; // plugin_basename( __FILE__ )
         private $githubAPIResult; // holds data from GitHub
         private $accessToken; // GitHub private repo token
      
@@ -25,6 +26,7 @@ if( !class_exists('GitHubPluginUpdater') ) {
             add_filter( "upgrader_post_install", array( $this, "postInstall" ), 10, 3 );
      
             $this->pluginFile = $pluginFile;
+            $this->pluginFilePath = plugin_basename( $pluginFile );
             $this->username = $gitHubUsername;
             $this->repo = $gitHubProjectName;
             $this->accessToken = $accessToken;
@@ -32,7 +34,7 @@ if( !class_exists('GitHubPluginUpdater') ) {
      
         // Get information regarding our plugin from WordPress
         private function initPluginData() {
-            $this->slug = plugin_basename( $this->pluginFile );
+            $this->slug = basename( $this->pluginFile, '.php' );
             $this->pluginData = get_plugin_data( $this->pluginFile );
         }
      
@@ -76,10 +78,11 @@ if( !class_exists('GitHubPluginUpdater') ) {
             $this->getRepoReleaseInfo();
 
             // Check the versions if we need to do an update
-            $doUpdate = version_compare( $this->githubAPIResult->tag_name, $transient->checked[$this->slug] );
+            $doUpdate = version_compare( $this->githubAPIResult->tag_name, $transient->checked[$this->pluginFilePath] );
 
             // Update the transient to include our updated plugin data
             if ( $doUpdate == 1 ) {
+
                 $package = $this->githubAPIResult->zipball_url;
              
                 // Include the access token for private GitHub repos
@@ -88,11 +91,13 @@ if( !class_exists('GitHubPluginUpdater') ) {
                 }
              
                 $obj = new stdClass();
+                $obj->id = "github.com/{$this->username}/{$this->repo}";
                 $obj->slug = $this->slug;
+                $obj->plugin = $this->pluginFilePath;
                 $obj->new_version = $this->githubAPIResult->tag_name;
                 $obj->url = $this->pluginData["PluginURI"];
                 $obj->package = $package;
-                $transient->response[$this->slug] = $obj;
+                $transient->response[$this->pluginFilePath] = $obj;
             }
              
             return $transient;
