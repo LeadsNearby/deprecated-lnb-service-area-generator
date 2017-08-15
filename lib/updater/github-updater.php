@@ -56,6 +56,7 @@ if( ! class_exists('GitHubPluginUpdater') ) {
              
             // Get the results
             $this->githubAPIResult = wp_remote_retrieve_body( wp_remote_get( $url ) );
+            
             if ( ! empty( $this->githubAPIResult ) ) {
                 $this->githubAPIResult = @json_decode( $this->githubAPIResult );
             }
@@ -68,6 +69,7 @@ if( ! class_exists('GitHubPluginUpdater') ) {
      
         // Push in plugin version information to get the update notification
         public function setTransitent( $transient ) {
+
             // If we have checked the plugin data before, don't re-check
             if ( empty( $transient->checked ) ) {
                 return $transient;
@@ -182,7 +184,8 @@ if( ! class_exists('GitHubPluginUpdater') ) {
             // Since we are hosted in GitHub, our plugin folder would have a dirname of
             // reponame-tagname change it to our original one:
             global $wp_filesystem;
-            $pluginFolder = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->slug );
+
+            $pluginFolder = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname($this->pluginFilePath);
             $wp_filesystem->move( $result['destination'], $pluginFolder );
             $result['destination'] = $pluginFolder;
 
