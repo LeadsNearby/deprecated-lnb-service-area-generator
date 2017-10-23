@@ -70,8 +70,9 @@ function LNB_settings_page(){
             update_post_meta($id, '_wp_page_template', $_REQUEST['page_template']);
         	if(isset($_REQUEST['schema-itemtype']) && $_REQUEST['schema-itemtype']!='')
         	update_post_meta($id, 'lnb-schema-itemtype', $_REQUEST['schema-itemtype']);
-        	if(isset($_REQUEST['fusion_page_sidebar']) && $_REQUEST['fusion_page_sidebar']!='')
-        	update_post_meta($id, 'sbg_selected_sidebar_replacement', array( 0 => $_REQUEST['fusion_page_sidebar'] ) );
+        	if(isset($_REQUEST['fusion_page_sidebar']) && $_REQUEST['fusion_page_sidebar']!='no-sidebar') {
+                update_ost_meta($id, 'sbg_selected_sidebar_replacement', array( 0 => $_REQUEST['fusion_page_sidebar'] ) );
+            }
 
 		
 		if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {	
