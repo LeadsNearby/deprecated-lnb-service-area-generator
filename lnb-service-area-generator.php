@@ -3,7 +3,7 @@
 Plugin Name: LeadsNearby Bulk Service Area Generator
 Plugin URI: http://leadsnearby.com/
 Description: Bulk creation of Nearby Now City Pages
-Version: 1.4.2
+Version: 1.4.4
 Author: LeadsNearby
 Author URI: http://leadsnearby.com
 License: GPLv2 or later
@@ -11,28 +11,43 @@ License: GPLv2 or later
 
 // Include Updater Class
 if ( is_admin() ) {
-	require_once( plugin_dir_path(__FILE__).'/lib/updater/github-updater.php' );
+	require_once( plugin_dir_path( __FILE__ ).'/lib/updater/github-updater.php' );
 	new GitHubPluginUpdater( __FILE__, 'LeadsNearby', 'lnb-service-area-generator' );
 }
 
-if(is_admin()){
-    global $table_prefix,$wpdb;
-    add_action('admin_menu','auto_generate_plugin_admin_menu');
+add_action('admin_menu','auto_generate_plugin_admin_menu');
 
-    function auto_generate_plugin_admin_menu(){
-        add_options_page(
-        	'Manage Contents',
-        	'LNB Bulk Service Area Pages',
-        	'administrator',
-        	'content_settings',
-        	'LNB_settings_page'
-        );
-    }  
-}
+function auto_generate_plugin_admin_menu(){
+	add_options_page(
+		'Bulk Create Nearby Now Service Area Pages',
+		'Create Service Area Pages',
+		'administrator',
+		'create_service_area_pages',
+		'LNB_settings_page'
+	);
+} 
 
-function LNB_settings_page(){
+function LNB_settings_page() {
+
+	// $default_settings = array(
+	// 	'cityname' => array(
+	// 		'label' => 'City Text Field',
+	// 		'description' => 'Please list one City,State per line',
+	// 		'placeholder' => 'Tester Tester',
+	// 		'type' => 'textarea'
+	// 	),
+	// 	// 'statename',
+	// 	// 'parent_page',
+	// 	// 'page_template',
+	// 	// 'sidebar',
+	// 	// 'page_title',
+	// 	// 'permalink',
+	// 	// 'page_contents',
+	// );
+	//
+	
     global $table_prefix,$wpdb;
-    if(isset($_REQUEST['action']))
+    if( isset( $_REQUEST['action'] ) && $_REQUEST['action'] == 'update' )
     {
         $cityname_arr = explode("\n",$_REQUEST['cityname']);
 		    $statename =$_REQUEST['statename'];
@@ -71,7 +86,7 @@ function LNB_settings_page(){
         	if(isset($_REQUEST['schema-itemtype']) && $_REQUEST['schema-itemtype']!='')
         	update_post_meta($id, 'lnb-schema-itemtype', $_REQUEST['schema-itemtype']);
         	if(isset($_REQUEST['fusion_page_sidebar']) && $_REQUEST['fusion_page_sidebar']!='no-sidebar') {
-                update_ost_meta($id, 'sbg_selected_sidebar_replacement', array( 0 => $_REQUEST['fusion_page_sidebar'] ) );
+                update_post_meta($id, 'sbg_selected_sidebar_replacement', array( 0 => $_REQUEST['fusion_page_sidebar'] ) );
             }
 
 		
@@ -106,20 +121,31 @@ function LNB_settings_page(){
 	}//End Else
 
     ?>
-	<style>
-	#bulk-creator-form .error {color: #ff0000; display: block;}
-	.dashicons-location-alt::before {content: "\f231";}	
-	</style>
+	<style>#bulk-creator-form .error{color:#ff0000;display:block;}.dashicons-location-alt::before{content:"\f231";}</style>
 	<div id="lnb-service-area-form">
 		<?php echo $update_message; ?>
 		<h2><?php echo _e('Auto Generated Page Contents Options');?></h2>
+		<p>[lnb-city] and [lnb-state] shortcodes are accepted in all fields. Shortcodes will be transformed into your city name and state respectively.</p>
 		<form id="bulk-creator-form" method="post" action="">
 			<?php wp_nonce_field('update-options'); ?>
 			<table>
+			<?php /* foreach( $default_settings as $field => $field_options ) { ?>
+				<tr>
+					<td valign="top">
+						<label for="<?php echo $field; ?>" ><?php echo _e( $field_options['label'] ); ?></label>
+						<?php if( $field_options['description'] ) { ?>
+						<p><?php echo $field_options['description']; ?></p>
+						<?php } ?>
+					</td>
+					<td>
+						<textarea id="<?php echo $field; ?>" name="<?php echo $field; ?>" placeholder="<?php echo $field_options['placeholder']; ?>" ></textarea>
+					</td>
+				</tr>
+			<?php } */ ?> 
 				<tr>
 					<td valign="top"><?php echo _e('City Text Field');?></td>
 					<td>
-						<textarea id="cityname" type="text" cols="40" rows="5" name="cityname" placeholder="Ex: Raleigh"></textarea>
+						<textarea id="cityname" type="text" cols="40" rows="5" name="cityname" placeholder="Ex: Raleigh&#10;Cary"></textarea>
 						<br><label><?php _e("Please list one City,State per line"); ?></label>
 					</td>
 				</tr>
@@ -148,40 +174,38 @@ function LNB_settings_page(){
 					?>
 					</td>
 				</tr>
-				<tr>
-					<td valign="top"><?php echo _e('Page Template');?></td><td>		
-					<?php
+				<?php // Check for templates and print out select field
 					$templates = get_page_templates();
-					if($templates && !empty($templates)){
-						echo "<select name='page_template' id='page_template' ><option value=''>Default</option>";
-						foreach ( $templates as $template_name => $template_filename ) {
-						$option = '<option value="' . $template_filename  . '">';
-						$option .= $template_name;
-						$option .= '</option>';
-						echo $option;
-						}
-						echo "</select>";
-					} //End IF Templates
-					?>
+					// print_r( $templates );
+					if( $templates ) :
+				?>
+				<tr>
+					<td valign="top"><?php echo _e('Page Template');?></td>
+					<td>		
+						<select name='page_template' id='page_template' >
+							<option value=''>Default</option>
+							<?php foreach ( $templates as $template_name => $template_filename ) { ?>
+							<option value="<?php echo $template_filename; ?>"><?php echo $template_name; ?></option>
+							<?php } ?>
+						</select>
 					</td>
 				</tr>
-				<?php 
-				$theme = wp_get_theme();
-				$theme_name = $theme->name;
-				$theme_parent = $theme->parent();
-
-				if ($theme_name = 'Avada' || $theme_parent = 'Avada' ) :  ?>
+				<?php endif; //End IF Templates ?>
+				<?php // Check if theme is Avada and include sidebar select field
+					$theme = wp_get_theme();
+					$theme_name = $theme->name;
+					$theme_parent = $theme->parent();
+					if( $theme_name = 'Avada' || $theme_parent = 'Avada' ) :
+				?>
 				<tr>
 					<td>Sidebar</td>
 					<td>
-						<select name='fusion_page_sidebar' id='fusion_page_sidebar' ><option value='no-sidebar'>No sidebar</option>
-						<?php
-							global $wp_registered_sidebars;
-							foreach ($wp_registered_sidebars as $sidebar) {
-								$option = '<option value="'.$sidebar['name'].'">'.$sidebar['name'].'</option>';
-								echo $option;
-							}
-						?>
+						<select name='fusion_page_sidebar' id='fusion_page_sidebar' >
+							<option value='no-sidebar'>No sidebar</option>
+							<?php global $wp_registered_sidebars;
+							foreach ($wp_registered_sidebars as $sidebar) { ?>
+							<option value="<?php echo $sidebar['name']; ?>"><?php echo $sidebar['name']; ?></option>
+							<?php } ?>
 					</td>
 				</tr>
 				<?php endif; ?>
@@ -254,7 +278,7 @@ function LNB_settings_page(){
 				</tr>
 				<?php } ?>
 			</table>
-			<input type="hidden" name="action" value="update" >
+			<input type="hidden" name="action" value="update">
 			<p><input type="submit" value="<?php echo _e('Create Service Area Pages'); ?>"></p>
 		</form>
 	</div>
