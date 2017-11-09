@@ -44,7 +44,7 @@ class LeadsNearbySAG {
 			die();
 		}
 
-		$cities = explode( PHP_EOL, $_POST['new_page']['cities'] );
+		$cities = $this->fix_city_array( explode( PHP_EOL, $_POST['new_page']['cities'] ) );
 
 		// ob_start();
 			
@@ -129,6 +129,16 @@ class LeadsNearbySAG {
 
 		return array_filter( $sanitized_metas );
 
+	}
+
+	function fix_city_array( $array ) {
+		$cities = array();
+
+		foreach( $array as $key => $value){
+			$cities[$key] = rtrim($value, "\n");
+		}
+
+		return $cities;
 	}
 
 	function remove_line_breaks( $string ) {
