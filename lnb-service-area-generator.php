@@ -44,13 +44,8 @@ class LeadsNearbySAG {
 			die();
 		}
 
-		$cities = $this->fix_city_array( explode( PHP_EOL, $_POST['new_page']['cities'] ) );
-
-		// ob_start();
-			
-		// print_r( $cities );
-	
-		// wp_die( ob_get_clean() );
+		$raw_cities = explode( PHP_EOL, $_POST['new_page']['cities']) ;
+		$cities = $this->fix_city_array( $raw_cities );
 
 		$state = $_POST['new_page']['state'];
 
@@ -62,23 +57,7 @@ class LeadsNearbySAG {
 			// Run through post_meta array, replace and use for meta_input array
 			$post_meta_array = $this->get_post_meta( $city, $state );
 
-			$post_array['meta_input'] = $post_meta_array;
-
-			// ob_start();
-			
-			// print_r( $post_array );
-	
-			// wp_die( ob_get_clean() );
-
-			// create a page for every city
-			// $post_array = array(
-			// 	'post_content'   => $this->replace_shortcodes( $city, $state, $page_contents ),	
-			// 	'post_status'    => 'publish',
-			// 	'post_title'     => $title2,
-			// 	'post_type'      => 'page',
-			// 	'post_name'      => str_replace(",","-",$link2),
-			// 	'post_parent' => isset( $_POST['parent_page'] ) ? $_POST['parent_page'] : null
-			//   );			
+			$post_array['meta_input'] = $post_meta_array;		
 			  
 			$id = wp_insert_post( $post_array, true );
 
@@ -134,8 +113,8 @@ class LeadsNearbySAG {
 	function fix_city_array( $array ) {
 		$cities = array();
 
-		foreach( $array as $key => $value){
-			$cities[$key] = rtrim($value, "\n");
+		foreach( $array as $city ){
+			$cities[] = trim( $city );
 		}
 
 		return $cities;
