@@ -3,7 +3,7 @@
 Plugin Name: LeadsNearby Bulk Service Area Generator
 Plugin URI: http://leadsnearby.com/
 Description: Bulk creation of Nearby Now City Pages
-Version: 2.0.3
+Version: 2.0.4
 Author: LeadsNearby
 Author URI: http://leadsnearby.com
 License: GPLv2 or later
