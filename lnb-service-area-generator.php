@@ -32,7 +32,7 @@ class LeadsNearbySAG {
 		add_options_page(
 			'Bulk Create Nearby Now Service Area Pages',
 			'Service Area Page Generator',
-			'administrator',
+			'publish_posts',
 			'create_service_area_pages',
 			[ $this, 'render_settings_page' ]
 		);
