@@ -3,7 +3,7 @@
 Plugin Name: LeadsNearby Bulk Service Area Generator
 Plugin URI: http://leadsnearby.com/
 Description: Bulk creation of Nearby Now City Pages
-Version: 2.0.4
+Version: 2.0.5
 Author: LeadsNearby
 Author URI: http://leadsnearby.com
 License: GPLv2 or later
@@ -21,11 +21,6 @@ class LeadsNearbySAG {
 		}
 
 		return self::$instance;
-	}
-
-	function update() {
-		require_once( plugin_dir_path( __FILE__ ).'/lib/updater/github-updater.php' );
-		new GitHubPluginUpdater( __FILE__, 'LeadsNearby', 'lnb-service-area-generator' );
 	}
 
 	function add_admin_page() {
@@ -464,8 +459,13 @@ if( ! is_admin() ) {
 
 $leadsnearby_sag = LeadsNearbySAG::getInstance();
 
-add_action( 'plugins_loaded', [ $leadsnearby_sag, 'update' ] );
 add_action( 'admin_menu', [ $leadsnearby_sag, 'add_admin_page' ] );
+
+add_action('admin_init', function() {
+    if (class_exists('\lnb\core\GitHubPluginUpdater')) {
+        new \lnb\core\GitHubPluginUpdater(__FILE__, 'lnb-service-area-generator');
+    }
+}, 99);
 
 //Action target that adds the "Insert NearbyNow" button to the post/page edit screen
 add_action('media_buttons', [ $leadsnearby_sag, 'add_nearbynow_button' ], 20);
