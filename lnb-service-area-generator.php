@@ -3,7 +3,7 @@
 Plugin Name: LeadsNearby Bulk Service Area Generator
 Plugin URI: http://leadsnearby.com/
 Description: Bulk creation of Nearby Now City Pages
-Version: 2.0.5
+Version: 2.1.0
 Author: LeadsNearby
 Author URI: http://leadsnearby.com
 License: GPLv2 or later
@@ -12,7 +12,14 @@ License: GPLv2 or later
 class LeadsNearbySAG {
 
     private static $instance = null;
-    public $update_message = '';
+	private $update_message = '';
+	private $pages_created = -1;
+	private $pages_failed = array();
+	
+	private function __construct() {
+		add_action('admin_init', [$this, 'add_pages']);
+		add_action('admin_notices', [$this, 'show_admin_notices']);
+	}
 
     public static function getInstance() {
 
@@ -20,7 +27,7 @@ class LeadsNearbySAG {
             self::$instance = new self();
         }
 
-        return self::$instance;
+		return self::$instance;
     }
 
     public function add_admin_page() {
@@ -31,38 +38,86 @@ class LeadsNearbySAG {
             'create_service_area_pages',
             [$this, 'render_settings_page']
         );
-    }
+	}
+	
+	public function show_admin_notices() {
+
+		ob_start();
+
+		if($this->pages_created > 0) : ?>
+
+			<div class="notice notice-success is-dismissible">
+                <p><?php echo $this->pages_created; ?> page(s) Created. Click here to <a href="edit.php?post_status=publish&post_type=page">View Pages</a></p>
+            </div>
+
+		<?php endif;
+
+		if($this->pages_failed) : ?>
+			<div class="notice notice-error is-dismissible">
+                <p><?php echo count($this->pages_failed); ?> page(s) could not be created</p>
+				<ul>
+					<?php foreach($this->pages_failed as $city_state => $failed_page) : ?>
+						<?php
+							$raw_post_name = isset($failed_page['post_name']) ? $failed_page['post_name'] : $failed_page['post_title'];
+						?>
+						<li><?php echo $city_state; ?> (<?php echo sanitize_title_for_query($raw_post_name); ?>)</li>
+					<?php endforeach; ?>
+				</ul>
+            </div>
+		<?php endif;
+
+		echo ob_get_clean();
+	}
 
     public function add_pages() {
 
-        if (!wp_verify_nonce($_POST['_wpnonce'], 'lnb-sag')) {
-            die();
-        }
+		if (isset($_POST['action']) && $_POST['action'] == 'add_sa_pages') {
 
-        $raw_cities = explode(PHP_EOL, $_POST['new_page']['cities']);
-        $cities = $this->fix_city_array($raw_cities);
+			if (!wp_verify_nonce($_POST['_wpnonce'], 'lnb-sag')) {
+				die();
+			}
 
-        $state = $_POST['new_page']['state'];
+			$raw_cities = explode(PHP_EOL, $_POST['new_page']['cities']);
+			$cities = $this->fix_city_array($raw_cities);
 
-        $counter = 0;
-        foreach ($cities as $city) {
+			$state = $_POST['new_page']['state'];
 
-            // Run through post_fields array, replace and use for post_array
-            $post_array = $this->get_post_fields($city, $state);
-            // Run through post_meta array, replace and use for meta_input array
-            $post_meta_array = $this->get_post_meta($city, $state);
+			$counter = 0;
+			foreach ($cities as $city) {
 
-            $post_array['meta_input'] = $post_meta_array;
+				// Run through post_fields array, replace and use for post_array
+				$post_array = $this->get_post_fields($city, $state);
+				
+				// Make sure a page with the same slug doesn't already exist
+				$raw_post_name = isset($post_array['post_name']) ? $post_array['post_name'] : $post_array['post_title'];
+				$query_args = array(
+					'pagename' => sanitize_title_for_query($raw_post_name)
+				);
+				if(isset($post_array['post_parent'])) {
+					$query_args['pagename'] = get_post($post_array['post_parent'])->post_name . '/' . $query_args['pagename'];
+				}
+				$checker_query = new WP_Query($query_args);
+				if($checker_query->have_posts()) {
+					$this->pages_failed["{$city}, {$state}"] = $post_array;
+					continue;
+				}
 
-            $id = wp_insert_post($post_array, true);
+				// Run through post_meta array, replace and use for meta_input array
+				$post_meta_array = $this->get_post_meta($city, $state);
 
-            if (!is_wp_error($id)) {
-                $counter++;
-            }
+				$post_array['meta_input'] = $post_meta_array;
 
-        }
+				$id = wp_insert_post($post_array, true);
 
-        $this->update_message = '<div id="message" class="updated"><p>' . $counter . ' page(s) Created. Click here to <a href="edit.php?post_status=publish&post_type=page">View Pages</a></p></div>';
+				if (!is_wp_error($id)) {
+					$counter++;
+				}
+
+			}
+			
+			$this->pages_created = $counter;
+
+		}
     }
 
     public function get_post_fields($city, $state) {
@@ -133,10 +188,6 @@ class LeadsNearbySAG {
 
     public function render_settings_page() {
 
-        if (isset($_POST['action']) && $_POST['action'] == 'update') {
-            $this->add_pages();
-        }
-
         $page_parents = get_pages();
         $page_templates = get_page_templates();
         global $wp_registered_sidebars;
@@ -185,7 +236,6 @@ class LeadsNearbySAG {
 		</style>
 		<div id="lnb-service-area-form">
 			<h2><?php echo _e('Auto Generated Page Contents Options'); ?></h2>
-			<?php echo $this->update_message; ?>
 			<p>[lnb-city] and [lnb-state] shortcodes are accepted in all fields. Shortcodes will be transformed into your city name and state respectively.</p>
 			<form id="bulk-creator-form" method="post" action="">
 				<?php echo wp_nonce_field('lnb-sag'); ?>
@@ -313,7 +363,7 @@ class LeadsNearbySAG {
 								<label>Page Content</label>
 								<!--<textarea class="tinymce-enabled" rows="15" cols="120" name="post_fields[post_content]" id="post_content"></textarea>-->
 								<?php
-								wp_editor($page_contents, 'post_content', array(
+								wp_editor('', 'post_content', array(
 									'wpautop' => false,
 									'media_buttons' => true,
 									'textarea_name' => 'post_fields[post_content]',
@@ -362,7 +412,7 @@ class LeadsNearbySAG {
 						<?php endif;?>
 					</tbody>
 				</table>
-				<input type="hidden" name="action" value="update">
+				<input type="hidden" name="action" value="add_sa_pages">
 				<p><input type="submit" value="<?php echo _e('Create Service Area Pages'); ?>"></p>
 			</form>
 		</div>
