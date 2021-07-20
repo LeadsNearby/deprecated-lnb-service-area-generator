@@ -11,40 +11,40 @@ License: GPLv2 or later
 
 class LeadsNearbySAG {
 
-    private static $instance = null;
-	private $update_message = '';
-	private $pages_created = -1;
-	private $pages_failed = array();
-	
-	private function __construct() {
-		add_action('admin_init', [$this, 'add_pages']);
-		add_action('admin_notices', [$this, 'show_admin_notices']);
-	}
+  private static $instance = null;
+  private $update_message = '';
+  private $pages_created = -1;
+  private $pages_failed = array();
 
-    public static function getInstance() {
+  private function __construct() {
+    add_action('admin_init', [$this, 'add_pages']);
+    add_action('admin_notices', [$this, 'show_admin_notices']);
+  }
 
-        if (self::$instance == null) {
-            self::$instance = new self();
-        }
+  public static function getInstance() {
 
-		return self::$instance;
+    if (self::$instance == null) {
+      self::$instance = new self();
     }
 
-    public function add_admin_page() {
-        add_options_page(
-            'Bulk Create Nearby Now Service Area Pages',
-            'Service Area Page Generator',
-            'publish_posts',
-            'create_service_area_pages',
-            [$this, 'render_settings_page']
-        );
-	}
-	
-	public function show_admin_notices() {
+    return self::$instance;
+  }
 
-		ob_start();
+  public function add_admin_page() {
+    add_options_page(
+      'Bulk Create Nearby Now Service Area Pages',
+      'Service Area Page Generator',
+      'publish_posts',
+      'create_service_area_pages',
+      [$this, 'render_settings_page']
+    );
+  }
 
-		if($this->pages_created > 0) : ?>
+  public function show_admin_notices() {
+
+    ob_start();
+
+    if ($this->pages_created > 0): ?>
 
 			<div class="notice notice-success is-dismissible">
                 <p><?php echo $this->pages_created; ?> page(s) Created. Click here to <a href="edit.php?post_status=publish&post_type=page">View Pages</a></p>
@@ -52,150 +52,150 @@ class LeadsNearbySAG {
 
 		<?php endif;
 
-		if($this->pages_failed) : ?>
+    if ($this->pages_failed): ?>
 			<div class="notice notice-error is-dismissible">
                 <p><?php echo count($this->pages_failed); ?> page(s) could not be created</p>
 				<ul>
-					<?php foreach($this->pages_failed as $city_state => $failed_page) : ?>
+					<?php foreach ($this->pages_failed as $city_state => $failed_page): ?>
 						<?php
-							$raw_post_name = isset($failed_page['post_name']) ? $failed_page['post_name'] : $failed_page['post_title'];
-						?>
+$raw_post_name = isset($failed_page['post_name']) ? $failed_page['post_name'] : $failed_page['post_title'];
+    ?>
 						<li><?php echo $city_state; ?> (<?php echo sanitize_title_for_query($raw_post_name); ?>)</li>
-					<?php endforeach; ?>
+					<?php endforeach;?>
 				</ul>
             </div>
 		<?php endif;
 
-		echo ob_get_clean();
-	}
+    echo ob_get_clean();
+  }
 
-    public function add_pages() {
+  public function add_pages() {
 
-		if (isset($_POST['action']) && $_POST['action'] == 'add_sa_pages') {
+    if (isset($_POST['action']) && $_POST['action'] == 'add_sa_pages') {
 
-			if (!wp_verify_nonce($_POST['_wpnonce'], 'lnb-sag')) {
-				die();
-			}
+      if (!wp_verify_nonce($_POST['_wpnonce'], 'lnb-sag')) {
+        die();
+      }
 
-			$raw_cities = explode(PHP_EOL, $_POST['new_page']['cities']);
-			$cities = $this->fix_city_array($raw_cities);
+      $raw_cities = explode(PHP_EOL, $_POST['new_page']['cities']);
+      $cities = $this->fix_city_array($raw_cities);
 
-			$state = $_POST['new_page']['state'];
+      $state = $_POST['new_page']['state'];
 
-			$counter = 0;
-			foreach ($cities as $city) {
+      $counter = 0;
+      foreach ($cities as $city) {
 
-				// Run through post_fields array, replace and use for post_array
-				$post_array = $this->get_post_fields($city, $state);
-				
-				// Make sure a page with the same slug doesn't already exist
-				$raw_post_name = isset($post_array['post_name']) ? $post_array['post_name'] : $post_array['post_title'];
-				$query_args = array(
-					'pagename' => sanitize_title_for_query($raw_post_name)
-				);
-				if(isset($post_array['post_parent'])) {
-					$query_args['pagename'] = get_post($post_array['post_parent'])->post_name . '/' . $query_args['pagename'];
-				}
-				$checker_query = new WP_Query($query_args);
-				if($checker_query->have_posts()) {
-					$this->pages_failed["{$city}, {$state}"] = $post_array;
-					continue;
-				}
+        // Run through post_fields array, replace and use for post_array
+        $post_array = $this->get_post_fields($city, $state);
 
-				// Run through post_meta array, replace and use for meta_input array
-				$post_meta_array = $this->get_post_meta($city, $state);
-
-				$post_array['meta_input'] = $post_meta_array;
-
-				$id = wp_insert_post($post_array, true);
-
-				if (!is_wp_error($id)) {
-					$counter++;
-				}
-
-			}
-			
-			$this->pages_created = $counter;
-
-		}
-    }
-
-    public function get_post_fields($city, $state) {
-
-        $fields = $_POST['post_fields'];
-        $sanitized_fields = array(
-            'post_status' => 'publish',
-            'post_type' => 'page',
+        // Make sure a page with the same slug doesn't already exist
+        $raw_post_name = isset($post_array['post_name']) ? $post_array['post_name'] : $post_array['post_title'];
+        $query_args = array(
+          'pagename' => sanitize_title_for_query($raw_post_name),
         );
-
-        foreach ($fields as $field => $field_value) {
-
-            if ($field != 'post_content') {
-                $field_value = $this->remove_line_breaks($field_value);
-            }
-
-            $sanitized_fields[$field] = $this->replace_shortcodes($city, $state, $field_value);
-
+        if (isset($post_array['post_parent'])) {
+          $query_args['pagename'] = get_post($post_array['post_parent'])->post_name . '/' . $query_args['pagename'];
+        }
+        $checker_query = new WP_Query($query_args);
+        if ($checker_query->have_posts()) {
+          $this->pages_failed["{$city}, {$state}"] = $post_array;
+          continue;
         }
 
-        return array_filter($sanitized_fields);
+        // Run through post_meta array, replace and use for meta_input array
+        $post_meta_array = $this->get_post_meta($city, $state);
 
-    }
+        $post_array['meta_input'] = $post_meta_array;
 
-    public function get_post_meta($city, $state) {
+        $id = wp_insert_post($post_array, true);
 
-        $metas = $_POST['post_meta'];
-
-        foreach ($metas as $meta => $meta_value) {
-
-            if ($meta == 'sbg_selected_sidebar_replacement') {
-                $sanitized_metas[$meta][0] = $this->replace_shortcodes($city, $state, $this->remove_line_breaks($meta_value));
-            } else {
-                $sanitized_metas[$meta] = $this->replace_shortcodes($city, $state, $this->remove_line_breaks($meta_value));
-            }
-
+        if (!is_wp_error($id)) {
+          $counter++;
         }
 
-        return array_filter($sanitized_metas);
+      }
+
+      $this->pages_created = $counter;
+
+    }
+  }
+
+  public function get_post_fields($city, $state) {
+
+    $fields = $_POST['post_fields'];
+    $sanitized_fields = array(
+      'post_status' => 'publish',
+      'post_type'   => 'page',
+    );
+
+    foreach ($fields as $field => $field_value) {
+
+      if ($field != 'post_content') {
+        $field_value = $this->remove_line_breaks($field_value);
+      }
+
+      $sanitized_fields[$field] = $this->replace_shortcodes($city, $state, $field_value);
 
     }
 
-    public function fix_city_array($array) {
-        $cities = array();
+    return array_filter($sanitized_fields);
 
-        foreach ($array as $city) {
-            $cities[] = trim($city);
-        }
+  }
 
-        return $cities;
-    }
+  public function get_post_meta($city, $state) {
 
-    public function remove_line_breaks($string) {
+    $metas = $_POST['post_meta'];
 
-        $new_string = str_replace(['\n', '\r', '\r\n', '\n\r'], '', $string);
+    foreach ($metas as $meta => $meta_value) {
 
-        return $new_string;
-
-    }
-
-    public function replace_shortcodes($city, $state, $string) {
-
-        $new_string = str_ireplace(['[lnb-city]', '[lnb-state]'], [$city, $state], $string);
-
-        return $new_string;
+      if ($meta == 'sbg_selected_sidebar_replacement') {
+        $sanitized_metas[$meta][0] = $this->replace_shortcodes($city, $state, $this->remove_line_breaks($meta_value));
+      } else {
+        $sanitized_metas[$meta] = $this->replace_shortcodes($city, $state, $this->remove_line_breaks($meta_value));
+      }
 
     }
 
-    public function render_settings_page() {
+    return array_filter($sanitized_metas);
 
-        $page_parents = get_pages();
-        $page_templates = get_page_templates();
-        global $wp_registered_sidebars;
-        $theme = wp_get_theme();
-        $theme_name = $theme->name;
-        $theme_parent = $theme->parent();
+  }
 
-        ob_start();?>
+  public function fix_city_array($array) {
+    $cities = array();
+
+    foreach ($array as $city) {
+      $cities[] = trim($city);
+    }
+
+    return $cities;
+  }
+
+  public function remove_line_breaks($string) {
+
+    $new_string = str_replace(['\n', '\r', '\r\n', '\n\r'], '', $string);
+
+    return $new_string;
+
+  }
+
+  public function replace_shortcodes($city, $state, $string) {
+
+    $new_string = str_ireplace(['[lnb-city]', '[lnb-state]'], [$city, $state], $string);
+
+    return $new_string;
+
+  }
+
+  public function render_settings_page() {
+
+    $page_parents = get_pages();
+    $page_templates = get_page_templates();
+    global $wp_registered_sidebars;
+    $theme = wp_get_theme();
+    $theme_name = $theme->name;
+    $theme_parent = $theme->parent();
+
+    ob_start();?>
 		<style>
 			#bulk-creator-form {
 				width:100%;
@@ -297,12 +297,24 @@ class LeadsNearbySAG {
 									<option value="TN">Tennessee (TN)</option>
 									<option value="TX">Texas (TX)</option>
 									<option value="UT">Utah (UT)</option>
-									<option value="VT">Vermont</option>
-									<option value="VA">Virginia</option>
-									<option value="WA">Washington</option>
-									<option value="WV">West Virginia</option>
-									<option value="WI">Wisconsin</option>
-									<option value="WY">Wyoming</option>
+									<option value="VT">Vermont (VT)</option>
+									<option value="VA">Virginia (VA)</option>
+									<option value="WA">Washington (WA)</option>
+									<option value="WV">West Virginia (WV)</option>
+									<option value="WI">Wisconsin (WI)</option>
+									<option value="WY">Alberta (AB)</option>
+									<option value="WY">British Columbia (BC)</option>
+									<option value="WY">Manitoba (MB)</option>
+									<option value="WY">New Brunswick (NB)</option>
+									<option value="WY">Newfoundland and Labrador (NL)</option>
+									<option value="WY">Northwest Territories (NT)</option>
+									<option value="WY">Nova Scotia (NS)</option>
+									<option value="WY">Nunavut (NU)</option>
+									<option value="WY">Ontario (ON)</option>
+									<option value="WY">Prince Edward Island (PE)</option>
+									<option value="WY">Quebec (QC)</option>
+									<option value="WY">Saskatchewan (SK)</option>
+									<option value="WY">Yukon (YT)</option>
 								</select>
 							</td>
 						</tr>
@@ -363,16 +375,16 @@ class LeadsNearbySAG {
 								<label>Page Content</label>
 								<!--<textarea class="tinymce-enabled" rows="15" cols="120" name="post_fields[post_content]" id="post_content"></textarea>-->
 								<?php
-								wp_editor('', 'post_content', array(
-									'wpautop' => false,
-									'media_buttons' => true,
-									'textarea_name' => 'post_fields[post_content]',
-									'textarea_rows' => 10,
-									'teeny' => true,
-									'tinymce' => true,
-									'drag_drop_upload' => true,
-								));
-								?>
+wp_editor('', 'post_content', array(
+      'wpautop'          => false,
+      'media_buttons'    => true,
+      'textarea_name'    => 'post_fields[post_content]',
+      'textarea_rows'    => 10,
+      'teeny'            => true,
+      'tinymce'          => true,
+      'drag_drop_upload' => true,
+    ));
+    ?>
 							</td>
 						</tr>
 						<?php if (is_plugin_active('wordpress-seo/wp-seo.php')): ?>
@@ -481,30 +493,30 @@ class LeadsNearbySAG {
 			</div>
 		</div>
 		<?php
-		$html = ob_get_clean();
-        echo $html;
-    } // End Function LNB_settings_page
+$html = ob_get_clean();
+    echo $html;
+  } // End Function LNB_settings_page
 
-    public function add_nearbynow_button() {
+  public function add_nearbynow_button() {
 
-        // do a version check for the new 3.5 UI
-        $version = get_bloginfo('version');
+    // do a version check for the new 3.5 UI
+    $version = get_bloginfo('version');
 
-        if ($version < 3.5) {
-            // show button for v 3.4 and below
-            $image_btn = plugins_url('/images/form-button.png', __FILE__);
-            echo '<a href="#TB_inline?width=480&inlineId=select_nearbynow" class="thickbox" id="add_bulk_nearbynow" title="' . __("Add NearbyNow Shortcode", 'bulk_nearbynow') . '"><img src="' . $image_btn . '" alt="' . __("Add NearbyNow Shortcode", 'bulk_nearbynow') . '" /></a>';
-        } else {
-            // display button matching new UI
-            echo '<a href="#TB_inline?width=480&inlineId=select_nearbynow" class="thickbox button gform_media_link" id="add_bulk_nearbynow" title="' . __("Add NearbyNow Shortcode", 'bulk_nearbynow') . '"><span style="padding-top: 3px;" class="dashicons dashicons-location-alt"></span> ' . __("Add NearbyNow", "bulk_nearbynow") . '</a>';
-        }
-
+    if ($version < 3.5) {
+      // show button for v 3.4 and below
+      $image_btn = plugins_url('/images/form-button.png', __FILE__);
+      echo '<a href="#TB_inline?width=480&inlineId=select_nearbynow" class="thickbox" id="add_bulk_nearbynow" title="' . __("Add NearbyNow Shortcode", 'bulk_nearbynow') . '"><img src="' . $image_btn . '" alt="' . __("Add NearbyNow Shortcode", 'bulk_nearbynow') . '" /></a>';
+    } else {
+      // display button matching new UI
+      echo '<a href="#TB_inline?width=480&inlineId=select_nearbynow" class="thickbox button gform_media_link" id="add_bulk_nearbynow" title="' . __("Add NearbyNow Shortcode", 'bulk_nearbynow') . '"><span style="padding-top: 3px;" class="dashicons dashicons-location-alt"></span> ' . __("Add NearbyNow", "bulk_nearbynow") . '</a>';
     }
+
+  }
 
 }
 
 if (!is_admin()) {
-    return;
+  return;
 }
 
 $leadsnearby_sag = LeadsNearbySAG::getInstance();
