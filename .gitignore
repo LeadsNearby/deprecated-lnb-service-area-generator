@@ -1,0 +1,7 @@
+*.log
+
+/.htaccess
+/license.txt
+/readme.html
+/sitemap.xml
+/sitemap.xml.gz
