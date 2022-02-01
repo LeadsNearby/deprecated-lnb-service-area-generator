@@ -9,17 +9,23 @@ Author URI: https://www.localgladiator.com
 License: GPLv2 or later
  */
 
-namespace gl\plugins;
+namespace localgl\plugins;
+
+if (!defined('ABSPATH')) {
+  exit;
+}
+// Exit if accessed directly
 
 define('SAG_PLUGIN_SLUG', plugin_basename(__DIR__));
 define('SAG_PLUGIN_FILE_NAME', plugin_basename(__FILE__));
 
 require_once plugin_dir_path(__FILE__) . 'class-updater.php';
+require_once plugin_dir_path(__FILE__) . 'class-val.php';
 
 add_action('admin_init', function () {
   if (!class_exists('\lnb\core\utils\GitHubPluginUpdater')) {
     require_once plugin_dir_path(__FILE__) . 'class-updater.php';
-    new \gl\plugins\serviceareagenerator\Updater();
+    new \localgl\plugins\serviceareagenerator\Updater();
   }
 }, 99);
 
@@ -210,6 +216,44 @@ $raw_post_name = isset($failed_page['post_name']) ? $failed_page['post_name'] : 
     $theme_name = $theme->name;
     $theme_parent = $theme->parent();
 
+    // Licensing Addition
+    if (isset($_POST['JbxbMsiGnF_lnb_validate']) && wp_verify_nonce($_POST['JbxbMsiGnF_lnb_validate'], '1R6OqYQJLr_lnb_validate')) {
+      $save_key = str_replace(' ', '', $_POST['lnb_license_validation']);
+      update_option('localglSAG', $save_key);
+      $activation_resp = \localgl\plugins\serviceareagenerator\ConfirmVal::activate($save_key);
+    }
+
+    $urlparts = parse_url(home_url());
+    $dom_check = $urlparts['host'];
+    $lic_key = get_option('localglSAG');
+    $lic_active = false;
+    $lic_problem = false;
+
+    if (!empty($lic_key)) {
+      $validation_resp = \localgl\plugins\serviceareagenerator\ConfirmVal::val($lic_key);
+
+      if (!is_wp_error($validation_resp)) {
+        $validation_body = json_decode($validation_resp['body']);
+        $check = false;
+
+        if (!empty($validation_body->registered_domains)) {
+          foreach ($validation_body->registered_domains as $domain) {
+            if ($domain->registered_domain === $dom_check) {
+              $check = true;
+            }
+          }
+        }
+
+        set_transient('localglSAG', $validation_body, 3600); // When checking, make sure the license key in the transient matches the DB
+        if (@$validation_body->status === 'active' && $check === true) {
+          $lic_active = true;
+        }
+      } else {
+        $lic_problem = true;
+        //delete_transient('localglSAG');
+      }
+    }
+
     ob_start();?>
 <style>
 #bulk-creator-form {
@@ -256,7 +300,107 @@ $raw_post_name = isset($failed_page['post_name']) ? $failed_page['post_name'] : 
 .dashicons-location-alt::before {
   content: "\f231";
 }
+
+/* Licensing Additions */
+.lnb-license-text-input {
+  height: 40px !important;
+  box-shadow: 1px 1px 1px 2px rgb(215 215 215 / 65%) !important;
+  border: 1px solid #D6D6D6 !important;
+  border-radius: unset !important;
+  margin: 0 5px 5px 0 !important;
+}
+
+.lnb-license-submit-button {
+  display: inline-block;
+  margin-top: 10px;
+  background-color: #fff;
+  padding: 10px 1rem;
+  cursor: pointer;
+}
+
+.lnb-license-x {
+  font-weight: bold;
+  font-size: 26px;
+  color: red;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.lnb-license-check {
+  margin-right: 5px;
+}
+
+.lnb-settings-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: -10px;
+}
+
+.lnb-settings-header span {
+  margin-top: 10px;
+}
+
+.lnb-license-validate {
+  border-bottom: 2px solid #999;
+  padding-bottom: 3em;
+  margin-bottom: 3em;
+}
+
+.lnb-license-validate strong {
+  margin-left: 22px;
+}
+
+@media screen and (min-width: 625px) {
+  .lnb-license-validation-message {
+    margin-left: 35px !important;
+  }
+}
 </style>
+
+<!-- Licensing Addition -->
+<div class="lnb-settings-header">
+  <h1>Bulk Service Area Page Generator</h1><span>by Local Gladiator</span>
+</div>
+<form method="post">
+  <div class="lnb-license-validate" style="border: 1px 1px solid #d6d6d6">
+    <label style="display: block; margin-top: 30px;">
+      <strong> Enter Your License Key Below to Enable this Product</strong>
+    </label>
+    <div style="display: inline-block;" class="lnb-license-input-wrapper">
+      <?php if ($lic_active): ?>
+      <img class="lnb-license-check" style="vertical-align: middle;" title=""
+        src="<?php echo plugin_dir_url(__FILE__) . 'checkmark-24.png'; ?>" />
+      <?php else: ?>
+      <span class="lnb-license-x">X</span>
+      <?php endif;?>
+      <input name="lnb_license_validation" size="50" class="lnb-license-text-input" style="" type="text"
+        value="<?php echo get_option('localglSAG'); ?>">
+      </input>
+      <input class="lnb-license-submit-button" type="submit" value="Save & Validate">
+      <?php if ($lic_active): ?>
+      <div class="lnb-license-validation-message" style="color: green;">
+        This plugin license is validated and active.
+      </div>
+      <?php elseif ($lic_problem): ?>
+      <div class="lnb-license-validation-message" style="color: red;">
+        There is a problem with the licensing server. Please contact <a href="https://www.leadsnearby.com">LeadsNearby
+        </a> for support.
+      </div>
+      <?php else: ?>
+      <div class="lnb-license-validation-message" style="color: red;">
+        This plugin is not active. Please enter a valid license above or contact
+        <a target="_blank" href="https://www.leadsnearby.com">LeadsNearby </a> for support.
+      </div>
+      <?php endif;?>
+    </div>
+    <?php wp_nonce_field('1R6OqYQJLr_lnb_validate', 'JbxbMsiGnF_lnb_validate');?>
+  </div>
+</form>
+<!-- End Licensing Addition -->
+
+
 <div id="lnb-service-area-form">
   <h2><?php echo _e('Auto Generated Page Contents Options'); ?></h2>
   <p>[lnb-city] and [lnb-state] shortcodes are accepted in all fields. Shortcodes will be transformed into your city

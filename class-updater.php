@@ -1,6 +1,6 @@
 <?php
 
-namespace gl\plugins\serviceareagenerator;
+namespace localgl\plugins\serviceareagenerator;
 
 if (!defined('ABSPATH')) {
   exit;
