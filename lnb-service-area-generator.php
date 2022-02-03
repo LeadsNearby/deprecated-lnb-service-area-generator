@@ -1,12 +1,14 @@
 <?php
 /*
 Plugin Name: Bulk Service Area Page Generator
-Plugin URI: https: //www.localgladiator.com
+Plugin URI: https://www.localgladiator.com
 Description: Bulk creation of Nearby Now Service Area/City Pages
 Version: 2.2
 Author: Local Gladiator
 Author URI: https://www.localgladiator.com
-License: GPLv2 or later
+Tested up to: 5.8.3
+Requires at least: 5.0.0
+Requires PHP: 7.0
  */
 
 namespace localgl\plugins;
@@ -35,10 +37,15 @@ class ServiceAreaGenerator {
   private $update_message = '';
   private $pages_created = -1;
   private $pages_failed = array();
+  private $transient;
+  private $option;
 
   private function __construct() {
     add_action('admin_init', [$this, 'add_pages']);
     add_action('admin_notices', [$this, 'show_admin_notices']);
+
+    $this->transient = get_transient('localglSAG');
+    $this->option = get_option('localglSAG');
   }
 
   public static function getInstance() {
@@ -247,10 +254,29 @@ $raw_post_name = isset($failed_page['post_name']) ? $failed_page['post_name'] : 
         set_transient('localglSAG', $validation_body, 3600); // When checking, make sure the license key in the transient matches the DB
         if (@$validation_body->status === 'active' && $check === true) {
           $lic_active = true;
+        } else {
+          $lic_problem = true;
+          //delete_transient('localglSAG');
         }
+      }
+    }
+
+    $msg = base64_decode('PHAgc3R5bGU9Im1hcmdpbi1ib3R0b206IDVweDsiPlZhbGlkIExpY2Vuc2UgTm90IEZvdW5kIGZvciBMb2NhbCBHbGFkaWF0b3IgQnVsayBTZXJ2aWNlIEFyZWEgUGFnZSBHZW5lcmF0b3IgPC9wPgoJICAgICAgICAgICAgICA8cD5QbGVhc2UgY29udGFjdAoJICAgICAgICAgICAgICA8YSBocmVmPSJodHRwczovL3d3dy5sb2NhbGdsYWRpYXRvci5jb20iPkxvY2FsIEdsYWRpYXRvcjwvYT4KCSAgICAgICAgICAgICAgdG8gcmVxdWVzdCBhIHZhbGlkIGxpY2Vuc2UgPC9wPg==');
+
+    if (class_exists(base64_decode('bG5iXG5ud2lkZ2V0c1xDb25maXJtVmFs'))) {
+      if (is_object($this->transient) && @$this->transient->status === 'active') {
+        $body = $this->transient;
+        $status = $this->transient;
+      } elseif (!empty($this->option)) {
+        $lk = $this->option;
+        $v = call_user_func(base64_decode('bG5iXG5ud2lkZ2V0c1xDb25maXJtVmFsOjp2YWw='), $lk);
+        $body = json_decode($v['body']);
+        if (@$body->status === 'active') {
+          set_transient('lnbNNWidgets', $body, 3600);
+        }
+        $status = json_decode($v['body']);
       } else {
-        $lic_problem = true;
-        //delete_transient('localglSAG');
+        return $msg;
       }
     }
 
@@ -399,6 +425,13 @@ $raw_post_name = isset($failed_page['post_name']) ? $failed_page['post_name'] : 
   </div>
 </form>
 <!-- End Licensing Addition -->
+
+<?php
+if (!is_object($body) || $body->status !== 'active' || empty($body) || $check !== true) {
+      echo $msg;
+      return;
+    }
+    ?>
 
 
 <div id="lnb-service-area-form">
