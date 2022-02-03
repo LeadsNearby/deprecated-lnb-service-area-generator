@@ -47,7 +47,7 @@ class Updater {
 
     $params = array(
       'secret_key'        => '61511cad7ea2c5.17132492',
-      'license_key'       => get_option('lnbNNWidgets'),
+      'license_key'       => get_option('localglSAG'),
       'registered_domain' => $this->domain,
       'plugin'            => SAG_PLUGIN_FILE_NAME,
     );
@@ -73,7 +73,7 @@ class Updater {
     $result->requires_php = $resp_obj->RequiresPHP;
     $result->download_link = $this->download_url;
     $result->trunk = $this->download_url;
-    $result->last_updated = '2021-01-01';
+    $result->last_updated = '2021-02-01';
     $result->homepage = $resp_obj->PluginURI;
 
     $result->sections = array(
@@ -94,7 +94,7 @@ class Updater {
 
     $params = array(
       'secret_key'        => '61511cad7ea2c5.17132492',
-      'license_key'       => get_option('lnbNNWidgets'),
+      'license_key'       => get_option('localglSAG'),
       'registered_domain' => $this->domain,
       'plugin'            => SAG_PLUGIN_FILE_NAME,
     );

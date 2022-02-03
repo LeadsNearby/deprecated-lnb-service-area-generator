@@ -11,7 +11,7 @@ Requires at least: 5.0.0
 Requires PHP: 7.0
  */
 
-namespace localgl\plugins;
+namespace localgl\plugins\sag;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -44,8 +44,21 @@ class ServiceAreaGenerator {
     add_action('admin_init', [$this, 'add_pages']);
     add_action('admin_notices', [$this, 'show_admin_notices']);
 
+    // Temporary Function for quicker mass replacement
+    register_activation_hook(SAG_PLUGIN_FILE_NAME, [$this, 'temp_add_license']);
+
     $this->transient = get_transient('localglSAG');
     $this->option = get_option('localglSAG');
+  }
+
+  // Temporary Function for quicker mass replacement
+  public function temp_add_license() {
+    $license = get_option('localglSAG');
+    $widgets_license = get_option('lnbNNWidgets');
+
+    if (!empty($widgets_license) && empty($license)) {
+      update_option('localglSAG', $widgets_license);
+    }
   }
 
   public static function getInstance() {
