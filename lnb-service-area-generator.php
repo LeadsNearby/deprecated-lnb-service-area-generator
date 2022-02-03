@@ -44,7 +44,7 @@ class ServiceAreaGenerator {
     add_action('admin_init', [$this, 'add_pages']);
     add_action('admin_notices', [$this, 'show_admin_notices']);
 
-    // Temporary Function for quicker mass replacement
+    // Temporary Function for quicker mass replacing
     register_activation_hook(SAG_PLUGIN_FILE_NAME, [$this, 'temp_add_license']);
 
     $this->transient = get_transient('localglSAG');
